@@ -9,11 +9,10 @@ import com.umbrellanow.unow_backend.models.scalars.PhoneNumber;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
 @Entity
-public class User {
+@Table(name = "un_user")
+public class User extends AbstractEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -25,6 +24,4 @@ public class User {
     private UserGroup userGroup;
     @Enumerated(EnumType.STRING)
     private UserStatus userStatus;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }
