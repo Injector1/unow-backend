@@ -2,7 +2,7 @@ package com.umbrellanow.unow_backend.controllers;
 
 import com.umbrellanow.unow_backend.controllers.model.AuthenticationRequest;
 import com.umbrellanow.unow_backend.controllers.model.AuthenticationResponse;
-import com.umbrellanow.unow_backend.integrations.keycloak.KeycloakService;
+import com.umbrellanow.unow_backend.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final KeycloakService keycloakService;
+    private final AuthService authService;
 
     @Autowired
-    public AuthController(KeycloakService keycloakService) {
-        this.keycloakService = keycloakService;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     /**
@@ -26,7 +26,7 @@ public class AuthController {
     @PostMapping("/send-code")
     public ResponseEntity<String> sendOneTimeCode(@RequestBody AuthenticationRequest request) {
         try {
-            keycloakService.sendOneTimeCode(request.getEmail());
+            authService.registerUser(request.getEmail());
             return ResponseEntity.ok("Verification code sent to your email.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -42,7 +42,7 @@ public class AuthController {
     @PostMapping("/verify-code")
     public ResponseEntity<?> verifyCode(@RequestBody AuthenticationRequest request) {
         try {
-            String accessToken = keycloakService.authenticateUser(request.getEmail(), request.getCode());
+            String accessToken = authService.authenticateUser(request.getEmail(), request.getCode());
             AuthenticationResponse response = new AuthenticationResponse(accessToken);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
