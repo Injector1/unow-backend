@@ -78,6 +78,39 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
+    public boolean isTokenValid(String token) {
+        try {
+            String introspectUrl = keycloakConfig.getAuthServerUrl() + "/realms/" +
+                    keycloakConfig.getRealm() + "/protocol/openid-connect/token/introspect";
+
+            RestTemplate restTemplate = new RestTemplate();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("client_id", keycloakConfig.getClientId());
+            body.add("client_secret", keycloakConfig.getClientSecret());
+            body.add("token", token);
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    introspectUrl,
+                    HttpMethod.POST,
+                    request,
+                    Map.class
+            );
+
+            Map<String, Object> responseBody = response.getBody();
+
+            return responseBody != null && Boolean.TRUE.equals(responseBody.get("active"));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
     public String authenticateUser(String email, String code) {
         String tokenUrl = keycloakConfig.getAuthServerUrl() + "/realms/" +
                 keycloakConfig.getRealm() + "/protocol/openid-connect/token";
