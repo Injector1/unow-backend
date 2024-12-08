@@ -4,4 +4,5 @@ import com.umbrellanow.unow_backend.modules.umbrella.infrastructure.entity.Umbre
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UmbrellaGroupRepository extends JpaRepository<UmbrellaGroup, Long> {
+    UmbrellaGroup findByName(String name);
 }
