@@ -78,23 +78,23 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public boolean isTokenValid(String token) {
+    public Map<String, Object> validateTokenAndExtractUserInformation(String token) {
+        String introspectUrl = keycloakConfig.getAuthServerUrl() + "/realms/" +
+                keycloakConfig.getRealm() + "/protocol/openid-connect/token/introspect";
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("client_id", keycloakConfig.getClientId());
+        body.add("client_secret", keycloakConfig.getClientSecret());
+        body.add("token", token);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+
         try {
-            String introspectUrl = keycloakConfig.getAuthServerUrl() + "/realms/" +
-                    keycloakConfig.getRealm() + "/protocol/openid-connect/token/introspect";
-
-            RestTemplate restTemplate = new RestTemplate();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("client_id", keycloakConfig.getClientId());
-            body.add("client_secret", keycloakConfig.getClientSecret());
-            body.add("token", token);
-
-            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
-
             ResponseEntity<Map> response = restTemplate.exchange(
                     introspectUrl,
                     HttpMethod.POST,
@@ -102,11 +102,20 @@ public class KeycloakServiceImpl implements KeycloakService {
                     Map.class
             );
 
-            Map<String, Object> responseBody = response.getBody();
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                Map<String, Object> responseBody = response.getBody();
+                Boolean isActive = (Boolean) responseBody.get("active");
 
-            return responseBody != null && Boolean.TRUE.equals(responseBody.get("active"));
+                if (Boolean.TRUE.equals(isActive)) {
+                    return responseBody;
+                } else {
+                    throw new IllegalArgumentException("Token is not active");
+                }
+            } else {
+                throw new RuntimeException("Failed to validate token. Response: " + response.getStatusCode());
+            }
         } catch (Exception e) {
-            return false;
+            throw new RuntimeException("Error during token validation: " + e.getMessage(), e);
         }
     }
 
