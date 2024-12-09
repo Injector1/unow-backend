@@ -1,5 +1,6 @@
 package com.umbrellanow.unow_backend.modules.umbrella.domain;
 
+import com.umbrellanow.unow_backend.integrations.s3.S3Service;
 import com.umbrellanow.unow_backend.modules.storage.infrastructure.StorageBoxRepository;
 import com.umbrellanow.unow_backend.modules.storage.infrastructure.entity.StorageBox;
 import com.umbrellanow.unow_backend.modules.umbrella.infrastructure.UmbrellaGroupRepository;
@@ -15,17 +16,20 @@ import java.util.Optional;
 
 @Service
 public class UmbrellaServiceImpl implements UmbrellaService {
-    private UmbrellaRepository umbrellaRepository;
-    private UmbrellaGroupRepository umbrellaGroupRepository;
-    private StorageBoxRepository storageBoxRepository;
+    private final UmbrellaRepository umbrellaRepository;
+    private final UmbrellaGroupRepository umbrellaGroupRepository;
+    private final StorageBoxRepository storageBoxRepository;
+    private final S3Service s3Service;
 
     @Autowired
     public UmbrellaServiceImpl(UmbrellaRepository umbrellaRepository,
                                StorageBoxRepository storageBoxRepository,
-                               UmbrellaGroupRepository umbrellaGroupRepository) {
+                               UmbrellaGroupRepository umbrellaGroupRepository,
+                               S3Service s3Service) {
         this.umbrellaRepository = umbrellaRepository;
         this.storageBoxRepository = storageBoxRepository;
         this.umbrellaGroupRepository = umbrellaGroupRepository;
+        this.s3Service = s3Service;
     }
 
     @Override
@@ -51,8 +55,19 @@ public class UmbrellaServiceImpl implements UmbrellaService {
         storageBox.setStoredUmbrella(umbrella);
         storageBox.setIsEmpty(false);
 
-        umbrellaRepository.save(umbrella);
+        Umbrella savedUmbrella = umbrellaRepository.save(umbrella);
         storageBoxRepository.save(storageBox);
+
+        String s3PathForUmbrella = s3Service.createPath("umbrella", umbrella.getId().toString());
+        updateS3PathForUmbrella(savedUmbrella, s3PathForUmbrella);
+    }
+
+
+    @Transactional
+    @Override
+    public void updateS3PathForUmbrella(Umbrella umbrellaToUpdate, String s3Path) {
+        umbrellaToUpdate.setS3Path(s3Path);
+        umbrellaRepository.save(umbrellaToUpdate);
     }
 
 
