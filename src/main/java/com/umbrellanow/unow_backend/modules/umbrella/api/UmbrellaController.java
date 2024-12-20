@@ -1,7 +1,10 @@
 package com.umbrellanow.unow_backend.modules.umbrella.api;
 
+import com.umbrellanow.unow_backend.modules.rate.infrastructure.entity.PriceRate;
 import com.umbrellanow.unow_backend.modules.umbrella.api.model.CreateUmbrellaRequest;
 import com.umbrellanow.unow_backend.modules.umbrella.api.model.GetUmbrellaByGroupNameRequest;
+import com.umbrellanow.unow_backend.modules.umbrella.api.model.GetUmbrellaByIDRequest;
+import com.umbrellanow.unow_backend.modules.umbrella.api.model.UmbrellaPriceRateResponse;
 import com.umbrellanow.unow_backend.modules.umbrella.domain.UmbrellaService;
 import com.umbrellanow.unow_backend.modules.umbrella.infrastructure.entity.Umbrella;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,5 +38,20 @@ public class UmbrellaController {
     public ResponseEntity<?> createUmbrellaByGroupName(@RequestBody CreateUmbrellaRequest request) {
         umbrellaService.createUmbrella(request.getStorageID(), request.getUmbrellaGroupName());
         return ResponseEntity.ok("");
+    }
+
+    @GetMapping("/umbrella")
+    public ResponseEntity<?> getUmbrellaDailyRate(@RequestBody GetUmbrellaByIDRequest request) {
+        return ResponseEntity.ok(umbrellaService.getUmbrellaByID(request.getId()));
+    }
+
+    @GetMapping("/umbrella-price-rate")
+    public ResponseEntity<UmbrellaPriceRateResponse> getUmbrellaPriceRate(@RequestBody GetUmbrellaByIDRequest request) {
+        PriceRate priceRateForUmbrella = umbrellaService.getPriceRateForUmbrella(request.getId());
+        UmbrellaPriceRateResponse umbrellaPriceRateResponse = new UmbrellaPriceRateResponse();
+        umbrellaPriceRateResponse.setDailyRate(priceRateForUmbrella.getDailyRate());
+        umbrellaPriceRateResponse.setHourlyRate(priceRateForUmbrella.getHourlyRate());
+        umbrellaPriceRateResponse.setDeposit(priceRateForUmbrella.getDeposit());
+        return ResponseEntity.ok(umbrellaPriceRateResponse);
     }
 }

@@ -20,6 +20,7 @@ public class PriceRate extends AbstractEntity {
 
     private Double dailyRate;
     private Double hourlyRate;
+    private Double deposit;
 
     @OneToMany(mappedBy = "priceRate")
     private Set<UmbrellaGroup> umbrellaGroups;

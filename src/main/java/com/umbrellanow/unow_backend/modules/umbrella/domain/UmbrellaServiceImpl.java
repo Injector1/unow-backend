@@ -1,6 +1,8 @@
 package com.umbrellanow.unow_backend.modules.umbrella.domain;
 
 import com.umbrellanow.unow_backend.integrations.s3.S3Service;
+import com.umbrellanow.unow_backend.modules.rate.infrastructure.PriceRateRepository;
+import com.umbrellanow.unow_backend.modules.rate.infrastructure.entity.PriceRate;
 import com.umbrellanow.unow_backend.modules.storage.infrastructure.StorageBoxRepository;
 import com.umbrellanow.unow_backend.modules.storage.infrastructure.entity.StorageBox;
 import com.umbrellanow.unow_backend.modules.umbrella.infrastructure.UmbrellaGroupRepository;
@@ -20,15 +22,18 @@ public class UmbrellaServiceImpl implements UmbrellaService {
     private final UmbrellaGroupRepository umbrellaGroupRepository;
     private final StorageBoxRepository storageBoxRepository;
     private final S3Service s3Service;
+    private final PriceRateRepository priceRateRepository;
 
     @Autowired
     public UmbrellaServiceImpl(UmbrellaRepository umbrellaRepository,
                                StorageBoxRepository storageBoxRepository,
                                UmbrellaGroupRepository umbrellaGroupRepository,
+                               PriceRateRepository priceRateRepository,
                                S3Service s3Service) {
         this.umbrellaRepository = umbrellaRepository;
         this.storageBoxRepository = storageBoxRepository;
         this.umbrellaGroupRepository = umbrellaGroupRepository;
+        this.priceRateRepository = priceRateRepository;
         this.s3Service = s3Service;
     }
 
@@ -75,5 +80,16 @@ public class UmbrellaServiceImpl implements UmbrellaService {
     public List<Umbrella> getUmbrellasByGroupName(String umbrellaGroupName) {
         UmbrellaGroup umbrellaGroup = umbrellaGroupRepository.findByName(umbrellaGroupName);
         return umbrellaRepository.findAllByUmbrellaGroup(umbrellaGroup);
+    }
+
+    @Override
+    public Umbrella getUmbrellaByID(String umbrellaID) {
+        return Optional.of(umbrellaRepository.findById(Long.getLong(umbrellaID))).orElse(null).get();
+    }
+
+    @Override
+    public PriceRate getPriceRateForUmbrella(String umbrellaID) {
+        Umbrella umbrellaByID = getUmbrellaByID(umbrellaID);
+        return umbrellaByID.getUmbrellaGroup().getPriceRate();
     }
 }

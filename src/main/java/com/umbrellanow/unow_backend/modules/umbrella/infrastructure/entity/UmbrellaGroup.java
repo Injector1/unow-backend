@@ -21,7 +21,6 @@ public class UmbrellaGroup extends AbstractEntity {
     private Long id;
     private String name;
     private String description;
-    private Double defaultDeposit;
 
     @OneToMany(mappedBy = "umbrellaGroup")
     private List<Umbrella> associatedUmbrellas;
