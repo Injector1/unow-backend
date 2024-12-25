@@ -47,8 +47,8 @@ public class UmbrellaController {
     }
 
     @GetMapping("/umbrella-price-rate")
-    public ResponseEntity<UmbrellaPriceRateResponse> getUmbrellaPriceRate(@QueryParam("id") String id) {
-        PriceRate priceRateForUmbrella = umbrellaService.getPriceRateForUmbrella(id);
+    public ResponseEntity<UmbrellaPriceRateResponse> getUmbrellaPriceRate(@QueryParam("id") String umbrellaID) {
+        PriceRate priceRateForUmbrella = umbrellaService.getPriceRateForUmbrella(umbrellaID);
         UmbrellaPriceRateResponse umbrellaPriceRateResponse = new UmbrellaPriceRateResponse();
         umbrellaPriceRateResponse.setDailyRate(priceRateForUmbrella.getDailyRate());
         umbrellaPriceRateResponse.setHourlyRate(priceRateForUmbrella.getHourlyRate());
