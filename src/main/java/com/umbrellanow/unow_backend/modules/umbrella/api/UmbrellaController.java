@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.ws.rs.QueryParam;
 import java.util.List;
 
 @RestController
@@ -46,8 +47,8 @@ public class UmbrellaController {
     }
 
     @GetMapping("/umbrella-price-rate")
-    public ResponseEntity<UmbrellaPriceRateResponse> getUmbrellaPriceRate(@RequestBody GetUmbrellaByIDRequest request) {
-        PriceRate priceRateForUmbrella = umbrellaService.getPriceRateForUmbrella(request.getId());
+    public ResponseEntity<UmbrellaPriceRateResponse> getUmbrellaPriceRate(@QueryParam("id") String id) {
+        PriceRate priceRateForUmbrella = umbrellaService.getPriceRateForUmbrella(id);
         UmbrellaPriceRateResponse umbrellaPriceRateResponse = new UmbrellaPriceRateResponse();
         umbrellaPriceRateResponse.setDailyRate(priceRateForUmbrella.getDailyRate());
         umbrellaPriceRateResponse.setHourlyRate(priceRateForUmbrella.getHourlyRate());

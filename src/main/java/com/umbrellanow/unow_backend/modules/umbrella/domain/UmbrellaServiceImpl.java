@@ -84,7 +84,7 @@ public class UmbrellaServiceImpl implements UmbrellaService {
 
     @Override
     public Umbrella getUmbrellaByID(String umbrellaID) {
-        return Optional.of(umbrellaRepository.findById(Long.getLong(umbrellaID))).orElse(null).get();
+        return Optional.of(umbrellaRepository.findById(Long.parseLong(umbrellaID))).orElse(null).get();
     }
 
     @Override
