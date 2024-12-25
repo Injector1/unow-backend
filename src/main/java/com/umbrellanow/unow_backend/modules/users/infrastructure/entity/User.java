@@ -8,9 +8,11 @@ import com.umbrellanow.unow_backend.shared.enumeration.UserStatus;
 import com.umbrellanow.unow_backend.shared.scalars.EmailAddress;
 import com.umbrellanow.unow_backend.shared.scalars.PhoneNumber;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "un_user")
 public class User extends AbstractEntity {
