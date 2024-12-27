@@ -39,7 +39,7 @@ public class UmbrellaServiceImpl implements UmbrellaService {
 
     @Override
     @Transactional
-    public void createUmbrella(Long storageID, String groupName) {
+    public Umbrella createUmbrella(Long storageID, String groupName) {
         Umbrella umbrella = new Umbrella();
 
         StorageBox storageBox = Optional.of(storageBoxRepository.findById(storageID))
@@ -64,15 +64,15 @@ public class UmbrellaServiceImpl implements UmbrellaService {
         storageBoxRepository.save(storageBox);
 
         String s3PathForUmbrella = s3Service.createPath("umbrella", umbrella.getId().toString());
-        updateS3PathForUmbrella(savedUmbrella, s3PathForUmbrella);
+        return updateS3PathForUmbrella(savedUmbrella, s3PathForUmbrella);
     }
 
 
     @Transactional
     @Override
-    public void updateS3PathForUmbrella(Umbrella umbrellaToUpdate, String s3Path) {
+    public Umbrella updateS3PathForUmbrella(Umbrella umbrellaToUpdate, String s3Path) {
         umbrellaToUpdate.setS3Path(s3Path);
-        umbrellaRepository.save(umbrellaToUpdate);
+        return umbrellaRepository.save(umbrellaToUpdate);
     }
 
 

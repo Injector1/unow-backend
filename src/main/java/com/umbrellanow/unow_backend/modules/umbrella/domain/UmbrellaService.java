@@ -6,9 +6,9 @@ import com.umbrellanow.unow_backend.modules.umbrella.infrastructure.entity.Umbre
 import java.util.List;
 
 public interface UmbrellaService {
-    void createUmbrella(Long storageID, String groupName);
+    Umbrella createUmbrella(Long storageID, String groupName);
     List<Umbrella> getUmbrellasByGroupName(String umbrellaGroupName);
-    void updateS3PathForUmbrella(Umbrella umbrellaToUpdate, String s3Path);
+    Umbrella updateS3PathForUmbrella(Umbrella umbrellaToUpdate, String s3Path);
     Umbrella getUmbrellaByID(String umbrellaID);
     PriceRate getPriceRateForUmbrella(String umbrellaID);
 }
