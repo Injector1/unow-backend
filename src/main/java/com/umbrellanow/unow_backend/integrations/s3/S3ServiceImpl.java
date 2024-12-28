@@ -41,7 +41,7 @@ public class S3ServiceImpl implements S3Service {
     @Override
     public void uploadFile(String path, String fileName, InputStream inputStream, long size, String contentType) {
         try {
-            String objectPath = path + fileName; // Полный путь для объекта
+            String objectPath = path + fileName;
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
