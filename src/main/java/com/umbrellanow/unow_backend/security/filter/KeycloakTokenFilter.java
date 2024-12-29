@@ -58,11 +58,10 @@ public class KeycloakTokenFilter extends OncePerRequestFilter {
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            filterChain.doFilter(request, response);
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Invalid or expired token.");
         }
+        filterChain.doFilter(request, response);
     }
 }
