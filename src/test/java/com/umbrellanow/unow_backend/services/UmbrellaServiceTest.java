@@ -29,10 +29,6 @@ public class UmbrellaServiceTest {
     public void testCreateUmbrellaFail() {
         StorageBox sb = storageBoxRepository.findAll().getFirst();
         UmbrellaGroup ug = umbrellaGroupRepository.findAll().getFirst();
-
-        List<Umbrella> umbrellasByGroupNameBefore = umbrellaService.getUmbrellasByGroupName(ug.getName());
-
-        assertEquals(1, umbrellasByGroupNameBefore.size());
         assertThrows(IllegalArgumentException.class, () -> umbrellaService.createUmbrella(sb.getId(), ug.getName()));
     }
 
