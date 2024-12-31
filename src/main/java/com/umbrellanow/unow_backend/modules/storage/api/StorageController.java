@@ -24,14 +24,15 @@ public class StorageController {
     @GetMapping("/empty-box")
     public ResponseEntity<?> getEmptyBox() {
         StorageBox emptyStorageBox = storageService.findEmptyStorageBox();
-        StorageBoxResponse response = new StorageBoxResponse();
-
         if (emptyStorageBox == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Empty box not found");
         }
-        response.setId(emptyStorageBox.getId());
-        response.setBoxNumber(emptyStorageBox.getNumber());
-        response.setBoxCode(emptyStorageBox.getCode());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                new StorageBoxResponse(
+                        emptyStorageBox.getId(),
+                        emptyStorageBox.getNumber(),
+                        emptyStorageBox.getCode()
+                )
+        );
     }
 }
