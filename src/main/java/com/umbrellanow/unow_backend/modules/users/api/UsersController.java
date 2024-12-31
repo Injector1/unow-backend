@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 public class UsersController {
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public UsersController(UserRepository userRepository) {

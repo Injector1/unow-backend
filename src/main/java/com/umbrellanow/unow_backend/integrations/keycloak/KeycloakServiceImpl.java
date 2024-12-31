@@ -17,10 +17,10 @@ import java.util.*;
 
 @Service
 public class KeycloakServiceImpl implements KeycloakService {
-    private KeycloakConfig keycloakConfig;
+    private final KeycloakConfig keycloakConfig;
     private Keycloak keycloak;
     private RealmResource realmResource;
-    private EmailService emailService;
+    private final EmailService emailService;
 
     public KeycloakServiceImpl(KeycloakConfig keycloakConfig, EmailService emailService) {
         this.keycloakConfig = keycloakConfig;

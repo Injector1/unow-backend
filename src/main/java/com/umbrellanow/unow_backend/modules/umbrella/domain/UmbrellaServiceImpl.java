@@ -22,18 +22,15 @@ public class UmbrellaServiceImpl implements UmbrellaService {
     private final UmbrellaGroupRepository umbrellaGroupRepository;
     private final StorageBoxRepository storageBoxRepository;
     private final S3Service s3Service;
-    private final PriceRateRepository priceRateRepository;
 
     @Autowired
     public UmbrellaServiceImpl(UmbrellaRepository umbrellaRepository,
                                StorageBoxRepository storageBoxRepository,
                                UmbrellaGroupRepository umbrellaGroupRepository,
-                               PriceRateRepository priceRateRepository,
                                S3Service s3Service) {
         this.umbrellaRepository = umbrellaRepository;
         this.storageBoxRepository = storageBoxRepository;
         this.umbrellaGroupRepository = umbrellaGroupRepository;
-        this.priceRateRepository = priceRateRepository;
         this.s3Service = s3Service;
     }
 

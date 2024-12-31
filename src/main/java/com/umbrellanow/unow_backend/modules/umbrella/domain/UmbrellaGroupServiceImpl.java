@@ -9,7 +9,7 @@ import java.util.List;
 
 @Service
 public class UmbrellaGroupServiceImpl implements UmbrellaGroupService {
-    private UmbrellaGroupRepository umbrellaGroupRepository;
+    private final UmbrellaGroupRepository umbrellaGroupRepository;
 
 
     @Autowired

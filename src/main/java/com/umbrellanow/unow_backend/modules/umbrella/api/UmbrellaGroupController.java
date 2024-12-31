@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/umbrella-group")
 public class UmbrellaGroupController {
-    private UmbrellaGroupService umbrellaGroupService;
+    private final UmbrellaGroupService umbrellaGroupService;
 
     @Autowired
     public UmbrellaGroupController(UmbrellaGroupService umbrellaGroupService) {
