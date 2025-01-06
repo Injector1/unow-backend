@@ -80,12 +80,12 @@ public class UmbrellaServiceImpl implements UmbrellaService {
     }
 
     @Override
-    public Umbrella getUmbrellaByID(String umbrellaID) {
-        return umbrellaRepository.findById(Long.parseLong(umbrellaID)).orElse(null);
+    public Umbrella getUmbrellaByID(long umbrellaID) {
+        return umbrellaRepository.findById(umbrellaID).orElse(null);
     }
 
     @Override
-    public PriceRate getPriceRateForUmbrella(String umbrellaID) {
+    public PriceRate getPriceRateForUmbrella(long umbrellaID) {
         Umbrella umbrellaByID = getUmbrellaByID(umbrellaID);
         return umbrellaByID.getUmbrellaGroup().getPriceRate();
     }

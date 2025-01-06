@@ -43,7 +43,7 @@ public class UmbrellaServiceTest {
 
         Umbrella umbrella = umbrellaService.createUmbrella(savedSB.getId(), ug.getName());
 
-        Umbrella existingUmbrella = umbrellaService.getUmbrellaByID(umbrella.getId().toString());
+        Umbrella existingUmbrella = umbrellaService.getUmbrellaByID(umbrella.getId());
 
         assertNotNull(existingUmbrella);
         assertEquals(sbNew.getCode(), existingUmbrella.getStorageBox().getCode());

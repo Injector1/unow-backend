@@ -34,7 +34,7 @@ public class UmbrellaControllerTest {
         UmbrellaService umbrellaService = Mockito.mock(UmbrellaService.class);
         S3Service storageService = Mockito.mock(S3Service.class);
 
-        Mockito.when(umbrellaService.getUmbrellaByID("1")).thenReturn(mockUmbrella);
+        Mockito.when(umbrellaService.getUmbrellaByID(1L)).thenReturn(mockUmbrella);
         Mockito.doNothing().when(storageService).uploadFile(
                 Mockito.anyString(),
                 Mockito.anyString(),
@@ -73,7 +73,7 @@ public class UmbrellaControllerTest {
         UmbrellaService umbrellaService = Mockito.spy(UmbrellaService.class);
         S3Service storageService = Mockito.mock(S3Service.class);
 
-        Mockito.doReturn(null).when(umbrellaService).getUmbrellaByID(Mockito.anyString());
+        Mockito.doReturn(null).when(umbrellaService).getUmbrellaByID(Mockito.anyLong());
         Mockito.doNothing().when(storageService).uploadFile(
                 Mockito.anyString(),
                 Mockito.anyString(),
@@ -117,7 +117,7 @@ public class UmbrellaControllerTest {
         mockUmbrella.setId(1L);
         mockUmbrella.setS3Path("s3/umbrella/1");
 
-        Mockito.when(umbrellaService.getUmbrellaByID("1")).thenReturn(mockUmbrella);
+        Mockito.when(umbrellaService.getUmbrellaByID(1L)).thenReturn(mockUmbrella);
 
         MockMultipartFile invalidPhoto = new MockMultipartFile(
                 "photo",

@@ -9,6 +9,6 @@ public interface UmbrellaService {
     Umbrella createUmbrella(Long storageID, String groupName);
     List<Umbrella> getUmbrellasByGroupName(String umbrellaGroupName);
     Umbrella updateS3PathForUmbrella(Umbrella umbrellaToUpdate, String s3Path);
-    Umbrella getUmbrellaByID(String umbrellaID);
-    PriceRate getPriceRateForUmbrella(String umbrellaID);
+    Umbrella getUmbrellaByID(long umbrellaID);
+    PriceRate getPriceRateForUmbrella(long umbrellaID);
 }

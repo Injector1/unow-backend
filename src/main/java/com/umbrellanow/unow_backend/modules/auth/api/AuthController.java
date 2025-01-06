@@ -1,7 +1,7 @@
 package com.umbrellanow.unow_backend.modules.auth.api;
 
-import com.umbrellanow.unow_backend.modules.auth.api.model.AuthenticationRequest;
-import com.umbrellanow.unow_backend.modules.auth.api.model.AuthenticationResponse;
+import com.umbrellanow.unow_backend.modules.auth.api.model.EmailAndCodeDTO;
+import com.umbrellanow.unow_backend.modules.auth.api.model.AccessTokenDTO;
 import com.umbrellanow.unow_backend.modules.auth.domain.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -24,7 +24,7 @@ public class AuthController {
      * @return Response indicating the code was sent.
      */
     @PostMapping("/send-code")
-    public ResponseEntity<String> sendOneTimeCode(@RequestBody AuthenticationRequest request) {
+    public ResponseEntity<String> sendOneTimeCode(@RequestBody EmailAndCodeDTO request) {
         try {
             authService.registerUser(request.getEmail());
             return ResponseEntity.ok("Verification code sent to your email.");
@@ -40,10 +40,10 @@ public class AuthController {
      * @return Response with the access token if authentication is successful.
      */
     @PostMapping("/verify-code")
-    public ResponseEntity<?> verifyCode(@RequestBody AuthenticationRequest request) {
+    public ResponseEntity<?> verifyCode(@RequestBody EmailAndCodeDTO request) {
         try {
             String accessToken = authService.authenticateUser(request.getEmail(), request.getCode());
-            AuthenticationResponse response = new AuthenticationResponse(accessToken);
+            AccessTokenDTO response = new AccessTokenDTO(accessToken);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

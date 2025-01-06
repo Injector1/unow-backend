@@ -1,6 +1,6 @@
 package com.umbrellanow.unow_backend.modules.storage.api;
 
-import com.umbrellanow.unow_backend.modules.storage.api.models.StorageBoxResponse;
+import com.umbrellanow.unow_backend.modules.storage.api.models.StorageBoxDTO;
 import com.umbrellanow.unow_backend.modules.storage.domain.StorageService;
 import com.umbrellanow.unow_backend.modules.storage.infrastructure.entity.StorageBox;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +27,9 @@ public class StorageController {
         if (emptyStorageBox == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Empty box not found");
         }
-        return ResponseEntity.ok(
-                new StorageBoxResponse(
-                        emptyStorageBox.getId(),
-                        emptyStorageBox.getNumber(),
-                        emptyStorageBox.getCode()
-                )
-        );
+        StorageBoxDTO body = new StorageBoxDTO(emptyStorageBox.getNumber(), emptyStorageBox.getCode());
+        body.setId(emptyStorageBox.getId());
+
+        return ResponseEntity.ok(body);
     }
 }

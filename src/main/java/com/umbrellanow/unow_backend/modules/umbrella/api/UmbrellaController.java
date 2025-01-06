@@ -2,10 +2,10 @@ package com.umbrellanow.unow_backend.modules.umbrella.api;
 
 import com.umbrellanow.unow_backend.integrations.s3.S3Service;
 import com.umbrellanow.unow_backend.modules.rate.infrastructure.entity.PriceRate;
-import com.umbrellanow.unow_backend.modules.umbrella.api.model.CreateUmbrellaRequest;
-import com.umbrellanow.unow_backend.modules.umbrella.api.model.GetUmbrellaByGroupNameRequest;
-import com.umbrellanow.unow_backend.modules.umbrella.api.model.GetUmbrellaByIDRequest;
-import com.umbrellanow.unow_backend.modules.umbrella.api.model.UmbrellaPriceRateResponse;
+import com.umbrellanow.unow_backend.modules.umbrella.api.model.CreateUmbrellaDTO;
+import com.umbrellanow.unow_backend.modules.umbrella.api.model.GetUmbrellaByGroupNameDTO;
+import com.umbrellanow.unow_backend.modules.umbrella.api.model.GetUmbrellaByIDDTO;
+import com.umbrellanow.unow_backend.modules.umbrella.api.model.UmbrellaPriceRateDTO;
 import com.umbrellanow.unow_backend.modules.umbrella.domain.UmbrellaService;
 import com.umbrellanow.unow_backend.modules.umbrella.infrastructure.entity.Umbrella;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,13 +38,13 @@ public class UmbrellaController {
 
 
     @GetMapping("/umbrellas")
-    public ResponseEntity<?> getAllUmbrellasByUmbrellaGroup(@RequestBody GetUmbrellaByGroupNameRequest request) {
+    public ResponseEntity<?> getAllUmbrellasByUmbrellaGroup(@RequestBody GetUmbrellaByGroupNameDTO request) {
         List<Umbrella> umbrellasByGroupName = umbrellaService.getUmbrellasByGroupName(request.getGroupName());
         return ResponseEntity.ok(umbrellasByGroupName);
     }
 
     @PostMapping("/create-umbrella")
-    public ResponseEntity<?> createUmbrellaByGroupName(@RequestBody CreateUmbrellaRequest request) {
+    public ResponseEntity<?> createUmbrellaByGroupName(@RequestBody CreateUmbrellaDTO request) {
         try {
             umbrellaService.createUmbrella(request.getStorageID(), request.getUmbrellaGroupName());
             return ResponseEntity.ok("");
@@ -55,14 +55,14 @@ public class UmbrellaController {
     }
 
     @GetMapping("/umbrella")
-    public ResponseEntity<?> getUmbrellaDailyRate(@RequestBody GetUmbrellaByIDRequest request) {
+    public ResponseEntity<?> getUmbrellaDailyRate(@RequestBody GetUmbrellaByIDDTO request) {
         return ResponseEntity.ok(umbrellaService.getUmbrellaByID(request.getId()));
     }
 
     @GetMapping("/umbrella-price-rate")
-    public ResponseEntity<UmbrellaPriceRateResponse> getUmbrellaPriceRate(@QueryParam("id") String umbrellaID) {
+    public ResponseEntity<UmbrellaPriceRateDTO> getUmbrellaPriceRate(@QueryParam("id") long umbrellaID) {
         PriceRate priceRateForUmbrella = umbrellaService.getPriceRateForUmbrella(umbrellaID);
-        UmbrellaPriceRateResponse umbrellaPriceRateResponse = new UmbrellaPriceRateResponse();
+        UmbrellaPriceRateDTO umbrellaPriceRateResponse = new UmbrellaPriceRateDTO();
         umbrellaPriceRateResponse.setDailyRate(priceRateForUmbrella.getDailyRate());
         umbrellaPriceRateResponse.setHourlyRate(priceRateForUmbrella.getHourlyRate());
         umbrellaPriceRateResponse.setDeposit(priceRateForUmbrella.getDeposit());
@@ -72,7 +72,7 @@ public class UmbrellaController {
     @PostMapping("/upload-photo")
     public ResponseEntity<?> uploadUmbrellaPhoto(@RequestPart("id") String id,
                                                  @RequestPart("photo") MultipartFile photo) {
-        Umbrella umbrellaByID = umbrellaService.getUmbrellaByID(id);
+        Umbrella umbrellaByID = umbrellaService.getUmbrellaByID(Long.parseLong(id));
 
         if (umbrellaByID == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
