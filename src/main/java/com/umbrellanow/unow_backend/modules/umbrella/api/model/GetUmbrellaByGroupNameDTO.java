@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class GetUmbrellaByGroupNameRequest {
+public class GetUmbrellaByGroupNameDTO {
     String groupName;
 }
