@@ -23,6 +23,11 @@ public class RentalServiceImpl implements RentalService {
 
 
     @Override
+    public Rental getRentalByID(long rentalID) {
+        return rentalRepository.findById(rentalID).orElse(null);
+    }
+
+    @Override
     public Rental addRentalRecord(RentalType rentalType, User user, Umbrella umbrella, Discount discount) {
         Rental rental = new Rental();
         rental.setType(rentalType);

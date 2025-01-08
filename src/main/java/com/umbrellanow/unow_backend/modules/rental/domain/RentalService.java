@@ -9,6 +9,7 @@ import com.umbrellanow.unow_backend.shared.enumeration.RentalType;
 import java.util.List;
 
 public interface RentalService {
+    Rental getRentalByID(long rentalID);
     Rental addRentalRecord(RentalType rentalType, User user, Umbrella umbrella, Discount discount);
     List<Rental> getAllRentalsByUserID(long userID);
     List<Rental> getAllRentalsByUmbrellaID(long umbrellaID);
