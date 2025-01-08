@@ -1,5 +1,6 @@
 package com.umbrellanow.unow_backend.modules.transaction.infrastructure.entity;
 
+import com.umbrellanow.unow_backend.modules.rental.infrastructure.entity.Rental;
 import com.umbrellanow.unow_backend.modules.umbrella.infrastructure.entity.Umbrella;
 import com.umbrellanow.unow_backend.modules.users.infrastructure.entity.User;
 import com.umbrellanow.unow_backend.shared.entity.AbstractEntity;
@@ -31,4 +32,9 @@ public class Transaction extends AbstractEntity {
     private Double amount;
     @Enumerated(EnumType.STRING)
     private TransactionType type;
+    private String orderID;
+    private String captureID;
+    @ManyToOne
+    @JoinColumn(name = "rental_id")
+    private Rental associatedRental;
 }
