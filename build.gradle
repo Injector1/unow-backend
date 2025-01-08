@@ -21,6 +21,7 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://oss.sonatype.org/content/repositories/releases/' }
 }
 
 dependencies {
@@ -34,6 +35,8 @@ dependencies {
 	implementation 'org.keycloak:keycloak-admin-client:21.0.1'
 
 	implementation 'io.minio:minio:8.5.5'
+
+	implementation group: 'com.paypal.sdk', name: 'checkout-sdk', version: '1.0.3'
 
 	compileOnly 'org.projectlombok:lombok'
 
