@@ -56,7 +56,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Transactional
     @Override
-    public void updateCaptureID(String orderID, String captureID) {
+    public Transaction updateTransaction(String orderID, String captureID, Rental rental) {
         Transaction transaction = transactionRepository.findByOrderID(orderID).orElse(null);
 
         if (transaction == null) {
@@ -64,6 +64,7 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         transaction.setCaptureID(captureID);
-        transactionRepository.save(transaction);
+        transaction.setAssociatedRental(rental);
+        return transactionRepository.save(transaction);
     }
 }

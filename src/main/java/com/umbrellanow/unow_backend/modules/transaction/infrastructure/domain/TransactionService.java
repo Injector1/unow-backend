@@ -9,6 +9,6 @@ public interface TransactionService {
     void createDepositTransaction(User user, Umbrella umbrella, double deposit, String orderID);
     void createRefundTransaction(Rental rental, double refundAmount);
     Transaction findByOrderID(String orderID);
-    void updateCaptureID(String orderID, String captureID);
+    Transaction updateTransaction(String orderID, String captureID, Rental rental);
     Transaction findDepositByRental(Rental rental);
 }
