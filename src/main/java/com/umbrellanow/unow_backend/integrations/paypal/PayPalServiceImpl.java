@@ -2,6 +2,7 @@ package com.umbrellanow.unow_backend.integrations.paypal;
 
 import com.paypal.core.PayPalHttpClient;
 import com.paypal.orders.AmountWithBreakdown;
+import com.paypal.orders.ApplicationContext;
 import com.paypal.orders.Order;
 import com.paypal.orders.OrderRequest;
 import com.paypal.orders.OrdersCaptureRequest;
@@ -37,6 +38,13 @@ public class PayPalServiceImpl implements PayPalService {
                 );
         purchaseUnits.add(purchaseUnit);
         orderRequest.purchaseUnits(purchaseUnits);
+
+        orderRequest.applicationContext(
+                new ApplicationContext()
+                        .brandName("UmbrellaNow")
+                        .returnUrl("http://localhost:8081/paypal/success")
+                        .cancelUrl("http://localhost:8081/paypal/cancel")
+        );
 
         OrdersCreateRequest request = new OrdersCreateRequest().requestBody(orderRequest);
         Order order = payPalHttpClient.execute(request).result();
