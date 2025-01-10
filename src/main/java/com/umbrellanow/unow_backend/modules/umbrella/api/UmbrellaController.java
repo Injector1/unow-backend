@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.ws.rs.QueryParam;
 import java.io.IOException;
 import java.util.List;
 
@@ -60,7 +60,8 @@ public class UmbrellaController {
     }
 
     @GetMapping("/umbrella-price-rate")
-    public ResponseEntity<UmbrellaPriceRateDTO> getUmbrellaPriceRate(@QueryParam("id") long umbrellaID) {
+    public ResponseEntity<UmbrellaPriceRateDTO> getUmbrellaPriceRate(@RequestParam("id") Long umbrellaID) {
+        // TODO: add validator for parameter
         PriceRate priceRateForUmbrella = umbrellaService.getPriceRateForUmbrella(umbrellaID);
         UmbrellaPriceRateDTO umbrellaPriceRateResponse = new UmbrellaPriceRateDTO();
         umbrellaPriceRateResponse.setDailyRate(priceRateForUmbrella.getDailyRate());
