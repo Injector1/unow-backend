@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class RentalServiceImpl implements RentalService {
@@ -66,10 +67,10 @@ public class RentalServiceImpl implements RentalService {
         }
 
         Double deposit = umbrella.getUmbrellaGroup().getPriceRate().getDeposit();
-        String approvalUrl = payPalService.createDepositOrder(deposit);
+        Map<String, String> payPalData = payPalService.createDepositOrder(deposit);
 
-        transactionService.createDepositTransaction(userByEmail, umbrella, deposit, approvalUrl);
-        return approvalUrl;
+        transactionService.createDepositTransaction(userByEmail, umbrella, deposit, payPalData.get("orderId"));
+        return payPalData.get("approvalLink");
     }
 
     @Transactional
@@ -92,6 +93,7 @@ public class RentalServiceImpl implements RentalService {
                     orderID,
                     rental
             );
+            umbrellaService.markUmbrellaAsLeased(umbrellaID);
             return transaction.getAssociatedUmbrella().getStorageBox();
         } else {
             throw new RuntimeException("Payment capture failed.");

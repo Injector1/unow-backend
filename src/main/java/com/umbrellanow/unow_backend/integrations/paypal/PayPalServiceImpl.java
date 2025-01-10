@@ -1,6 +1,7 @@
 package com.umbrellanow.unow_backend.integrations.paypal;
 
 import com.paypal.core.PayPalHttpClient;
+import com.paypal.http.exceptions.HttpException;
 import com.paypal.orders.AmountWithBreakdown;
 import com.paypal.orders.ApplicationContext;
 import com.paypal.orders.Order;
@@ -16,7 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PayPalServiceImpl implements PayPalService {
@@ -25,7 +28,7 @@ public class PayPalServiceImpl implements PayPalService {
 
 
     @Override
-    public String createDepositOrder(double depositAmount) throws IOException {
+    public Map<String, String> createDepositOrder(double depositAmount) throws IOException {
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.checkoutPaymentIntent("CAPTURE");
 
@@ -42,28 +45,42 @@ public class PayPalServiceImpl implements PayPalService {
         orderRequest.applicationContext(
                 new ApplicationContext()
                         .brandName("UmbrellaNow")
-                        .returnUrl("http://localhost:8081/paypal/success")
-                        .cancelUrl("http://localhost:8081/paypal/cancel")
+                        .returnUrl("http://localhost:8100/paypal/success")
+                        .cancelUrl("http://localhost:8100/paypal/cancel")
         );
 
         OrdersCreateRequest request = new OrdersCreateRequest().requestBody(orderRequest);
         Order order = payPalHttpClient.execute(request).result();
 
-        return order.links().stream()
+        String approvalLink = order.links().stream()
                 .filter(link -> "approve".equals(link.rel()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No approval link found"))
                 .href();
+
+        Map<String, String> result = new HashMap<>();
+        result.put("approvalLink", approvalLink);
+        result.put("orderId", order.id());
+
+        return result;
     }
 
     @Override
     public boolean capturePayment(String orderId) throws IOException {
-        OrdersCaptureRequest request = new OrdersCaptureRequest(orderId);
-        request.requestBody(new OrderRequest());
-        Order order = payPalHttpClient.execute(request).result();
+        try {
+            OrdersCaptureRequest request = new OrdersCaptureRequest(orderId);
+            request.requestBody(new OrderRequest());
+            Order order = payPalHttpClient.execute(request).result();
 
-        return "COMPLETED".equalsIgnoreCase(order.status());
-
+            return "COMPLETED".equalsIgnoreCase(order.status());
+        } catch (HttpException ex) {
+            if (ex.getMessage().contains("ORDER_ALREADY_CAPTURED")) {
+                System.out.println("Order already captured: " + orderId);  // TODO: replace with more robust logging
+                return true;
+            } else {
+                throw ex;
+            }
+        }
     }
 
     @Override
