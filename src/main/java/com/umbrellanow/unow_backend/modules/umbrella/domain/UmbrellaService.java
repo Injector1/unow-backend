@@ -11,4 +11,5 @@ public interface UmbrellaService {
     Umbrella updateS3PathForUmbrella(Umbrella umbrellaToUpdate, String s3Path);
     Umbrella getUmbrellaByID(long umbrellaID);
     PriceRate getPriceRateForUmbrella(long umbrellaID);
+    void markUmbrellaAsLeased(long umbrellaID);
 }

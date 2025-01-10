@@ -13,6 +13,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -88,5 +89,18 @@ public class UmbrellaServiceImpl implements UmbrellaService {
     public PriceRate getPriceRateForUmbrella(long umbrellaID) {
         Umbrella umbrellaByID = getUmbrellaByID(umbrellaID);
         return umbrellaByID.getUmbrellaGroup().getPriceRate();
+    }
+
+    @Override
+    public void markUmbrellaAsLeased(long umbrellaID) {
+        Umbrella umbrellaByID = getUmbrellaByID(umbrellaID);
+
+        if (umbrellaByID.isCurrentlyLeased()) {
+            throw new IllegalArgumentException("Umbrella is already leased");
+        }
+
+        umbrellaByID.setCurrentlyLeased(true);
+        umbrellaByID.setLastLeaseDate(LocalDateTime.now());
+        umbrellaRepository.save(umbrellaByID);
     }
 }
