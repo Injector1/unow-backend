@@ -27,6 +27,8 @@ public class RentalController {
         try {
             String approvalURL = rentalService.getApprovalURLForUmbrellaDeposit(dto.getUmbrellaID());
             return ResponseEntity.ok(new PayPalPaymentURLDTO(approvalURL));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating deposit approval url");
         }
@@ -42,6 +44,8 @@ public class RentalController {
                     AuthenticationUtils.getCurrentUserEmail()
             );
             return ResponseEntity.ok(new StorageBoxDTO(storageBox.getNumber(), storageBox.getCode()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error capturing payment");
         }
