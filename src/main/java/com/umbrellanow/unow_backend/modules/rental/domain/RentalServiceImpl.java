@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -100,6 +101,16 @@ public class RentalServiceImpl implements RentalService {
         }
     }
 
+    @Override
+    public Collection<Rental> getAllRentalsForUser(String userEmail) {
+        User userByEmail = userService.getUserByEmail(userEmail);
+
+        if (userByEmail == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+        return rentalRepository.findAllByUser_id(userByEmail.getId());
+    }
+
     @Transactional
     @Override
     public void returnUmbrellaAndRefundDeposit(long rentalId) throws IOException {
@@ -122,6 +133,7 @@ public class RentalServiceImpl implements RentalService {
             transactionService.createRefundTransaction(rental, refundAmount);
             // TODO: update rental price field
             rental.setStatus(RentalStatus.COMPLETED);
+            rentalRepository.save(rental);
         } else {
             throw new RuntimeException("Refund failed.");
         }
@@ -132,6 +144,7 @@ public class RentalServiceImpl implements RentalService {
         Rental rental = new Rental();
         rental.setType(rentalType);
         rental.setUser(user);
+        rental.setStatus(RentalStatus.ACTIVE);
         rental.setUmbrella(umbrella);
         rental.setDiscount(discount);
         return rentalRepository.save(rental);

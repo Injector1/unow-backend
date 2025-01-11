@@ -9,6 +9,7 @@ import com.umbrellanow.unow_backend.shared.enumeration.RentalType;
 import jakarta.transaction.Transactional;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 public interface RentalService {
@@ -25,4 +26,5 @@ public interface RentalService {
                                             String rentalType,
                                             long umbrellaID,
                                             String userEmail) throws IOException;
+    Collection<Rental> getAllRentalsForUser(String userEmail);
 }

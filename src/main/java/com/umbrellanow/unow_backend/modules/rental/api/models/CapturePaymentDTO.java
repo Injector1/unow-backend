@@ -4,14 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @AllArgsConstructor
-public class RentalDTO {
-    private String rentalStatus;
+public class CapturePaymentDTO {
+    private String orderID;
     private String rentalType;
-    private LocalDateTime startDate;
     private long umbrellaID;
 }
