@@ -5,10 +5,12 @@ import com.umbrellanow.unow_backend.modules.rental.api.models.CapturePaymentDTO;
 import com.umbrellanow.unow_backend.modules.rental.api.models.RentalDTO;
 import com.umbrellanow.unow_backend.modules.rental.api.models.UmbrellaIDDTO;
 import com.umbrellanow.unow_backend.modules.rental.domain.RentalService;
+import com.umbrellanow.unow_backend.modules.rental.infrastructure.entity.Rental;
 import com.umbrellanow.unow_backend.modules.storage.api.models.StorageBoxDTO;
 import com.umbrellanow.unow_backend.modules.storage.infrastructure.entity.StorageBox;
 import com.umbrellanow.unow_backend.security.utils.AuthenticationUtils;
 import com.umbrellanow.unow_backend.shared.enumeration.RentalStatus;
+import com.umbrellanow.unow_backend.shared.enumeration.RentalType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,14 @@ public class RentalController {
         this.rentalService = rentalService;
     }
 
+    private double getRate(Rental rental) {
+        if (rental.getType() == RentalType.DAILY) {
+            return rental.getUmbrella().getUmbrellaGroup().getPriceRate().getDailyRate();
+        } else {
+            return rental.getUmbrella().getUmbrellaGroup().getPriceRate().getHourlyRate();
+        }
+    }
+
 
     @GetMapping("/my")
     public ResponseEntity<?> getAllRentalsForCurrentUser() {
@@ -39,7 +49,9 @@ public class RentalController {
                                     rental.getStatus() == null ? RentalStatus.ACTIVE.toString() : rental.getStatus().toString(),
                                     rental.getType().toString(),
                                     rental.getCreatedDate(),
-                                    rental.getUmbrella().getId())
+                                    rental.getUmbrella().getId(),
+                                    getRate(rental)
+                            )
                     ).toList();
 
             return ResponseEntity.ok(allRentalsForUser);
@@ -48,8 +60,18 @@ public class RentalController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error retrieving rentals");
         }
-
     }
+
+    @GetMapping("/rental-cost")
+    public ResponseEntity<Double> getCurrentRentalCost(@RequestParam Long rentalId) {
+        try {
+            double rentalCost = rentalService.calculateRentalCost(rentalId);
+            return ResponseEntity.ok(rentalCost);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(0.0);
+        }
+    }
+
 
     @PostMapping("/deposit")
     public ResponseEntity<?> getDepositWithdrawalURL(@RequestBody UmbrellaIDDTO dto) {
