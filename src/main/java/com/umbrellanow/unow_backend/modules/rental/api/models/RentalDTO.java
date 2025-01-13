@@ -14,4 +14,5 @@ public class RentalDTO {
     private String rentalType;
     private LocalDateTime startDate;
     private long umbrellaID;
+    private double priceRate;
 }

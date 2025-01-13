@@ -26,6 +26,14 @@ public class RentalController {
         this.rentalService = rentalService;
     }
 
+    private double getRate(Rental rental) {
+        if (rental.getType() == RentalType.DAILY) {
+            return rental.getUmbrella().getUmbrellaGroup().getPriceRate().getDailyRate();
+        } else {
+            return rental.getUmbrella().getUmbrellaGroup().getPriceRate().getHourlyRate();
+        }
+    }
+
 
     @GetMapping("/my")
     public ResponseEntity<?> getAllRentalsForCurrentUser() {
@@ -39,7 +47,9 @@ public class RentalController {
                                     rental.getStatus() == null ? RentalStatus.ACTIVE.toString() : rental.getStatus().toString(),
                                     rental.getType().toString(),
                                     rental.getCreatedDate(),
-                                    rental.getUmbrella().getId())
+                                    rental.getUmbrella().getId(),
+                                    getRate(rental)
+                            )
                     ).toList();
 
             return ResponseEntity.ok(allRentalsForUser);
@@ -50,6 +60,17 @@ public class RentalController {
         }
 
     }
+
+    @GetMapping("/rental-cost")
+    public ResponseEntity<Double> getCurrentRentalCost(@RequestParam Long rentalId) {
+        try {
+            double rentalCost = rentalService.calculateRentalCost(rentalId);
+            return ResponseEntity.ok(rentalCost);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(0.0);
+        }
+    }
+
 
     @PostMapping("/deposit")
     public ResponseEntity<?> getDepositWithdrawalURL(@RequestBody UmbrellaIDDTO dto) {
