@@ -100,6 +100,7 @@ public class PayPalServiceImpl implements PayPalService {
     @Transactional
     @Override
     public boolean refundPayment(String captureId, double refundAmount) throws IOException {
+        // TODO: extract order id and save to our transactions
         RefundRequest refundRequest = new RefundRequest()
                 .amount(new Money()
                         .currencyCode("EUR")

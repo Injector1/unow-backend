@@ -133,6 +133,7 @@ public class RentalServiceImpl implements RentalService {
     @Transactional
     @Override
     public void returnUmbrellaAndRefundDeposit(String orderID, long umbrellaID, String userEmail) throws IOException {
+        // TODO: update also RENTAL transaction with capture id
         String captureId = payPalService.capturePayment(orderID);
 
         User userByEmail = userService.getUserByEmail(userEmail);

@@ -36,6 +36,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public void createRefundTransaction(Rental rental, double refundAmount) {
         Transaction transaction = new Transaction();
+        transaction.setAssociatedRental(rental);
         transaction.setUser(rental.getUser());
         transaction.setAssociatedUmbrella(rental.getUmbrella());
         transaction.setAmount(refundAmount);
@@ -49,6 +50,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = new Transaction();
         transaction.setUser(rental.getUser());
         transaction.setAssociatedUmbrella(rental.getUmbrella());
+        transaction.setAssociatedRental(rental);
         transaction.setAmount(rental.getTotalCost());
         transaction.setType(TransactionType.RENTAL);
         transaction.setOrderID(orderID);
