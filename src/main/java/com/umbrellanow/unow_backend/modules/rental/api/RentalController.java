@@ -1,16 +1,16 @@
 package com.umbrellanow.unow_backend.modules.rental.api;
 
+import com.umbrellanow.unow_backend.modules.rental.api.models.CaptureFinalPaymentDTO;
 import com.umbrellanow.unow_backend.modules.rental.api.models.PayPalPaymentURLDTO;
-import com.umbrellanow.unow_backend.modules.rental.api.models.CapturePaymentDTO;
+import com.umbrellanow.unow_backend.modules.rental.api.models.CaptureDepositPaymentDTO;
+import com.umbrellanow.unow_backend.modules.rental.api.models.RentalCostDTO;
 import com.umbrellanow.unow_backend.modules.rental.api.models.RentalDTO;
 import com.umbrellanow.unow_backend.modules.rental.api.models.UmbrellaIDDTO;
 import com.umbrellanow.unow_backend.modules.rental.domain.RentalService;
-import com.umbrellanow.unow_backend.modules.rental.infrastructure.entity.Rental;
 import com.umbrellanow.unow_backend.modules.storage.api.models.StorageBoxDTO;
 import com.umbrellanow.unow_backend.modules.storage.infrastructure.entity.StorageBox;
 import com.umbrellanow.unow_backend.security.utils.AuthenticationUtils;
 import com.umbrellanow.unow_backend.shared.enumeration.RentalStatus;
-import com.umbrellanow.unow_backend.shared.enumeration.RentalType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,14 +28,6 @@ public class RentalController {
         this.rentalService = rentalService;
     }
 
-    private double getRate(Rental rental) {
-        if (rental.getType() == RentalType.DAILY) {
-            return rental.getUmbrella().getUmbrellaGroup().getPriceRate().getDailyRate();
-        } else {
-            return rental.getUmbrella().getUmbrellaGroup().getPriceRate().getHourlyRate();
-        }
-    }
-
 
     @GetMapping("/my")
     public ResponseEntity<?> getAllRentalsForCurrentUser() {
@@ -45,12 +37,15 @@ public class RentalController {
             Collection<RentalDTO> allRentalsForUser = rentalService
                     .getAllRentalsForUser(currentUserEmail)
                     .stream()
-                    .map(rental -> new RentalDTO(
-                                    rental.getStatus() == null ? RentalStatus.ACTIVE.toString() : rental.getStatus().toString(),
-                                    rental.getType().toString(),
-                                    rental.getCreatedDate(),
-                                    rental.getUmbrella().getId(),
-                                    getRate(rental)
+                    .map(rental ->
+                            new RentalDTO(
+                                rental.getStatus() == null
+                                        ? RentalStatus.ACTIVE.toString()
+                                        : rental.getStatus().toString(),  // TODO: fix issue with recs from database
+                                rental.getType().toString(),
+                                rental.getCreatedDate(),
+                                rental.getUmbrella().getId(),
+                                rentalService.getRateForRental(rental)
                             )
                     ).toList();
 
@@ -63,12 +58,17 @@ public class RentalController {
     }
 
     @GetMapping("/rental-cost")
-    public ResponseEntity<Double> getCurrentRentalCost(@RequestParam Long rentalId) {
+    public ResponseEntity<?> getCurrentRentalCost(@RequestParam("umbrellaID") Long umbrellaID) {
         try {
-            double rentalCost = rentalService.calculateRentalCost(rentalId);
-            return ResponseEntity.ok(rentalCost);
+            double rentalCost = rentalService.calculateRentalCost(
+                    umbrellaID,
+                    AuthenticationUtils.getCurrentUserEmail()
+            );
+            return ResponseEntity.ok(new RentalCostDTO(rentalCost));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(0.0);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error getting cost");
         }
     }
 
@@ -85,13 +85,28 @@ public class RentalController {
         }
     }
 
-    @PostMapping("/capture")
-    public ResponseEntity<?> capturePayment(@RequestBody CapturePaymentDTO capturePaymentDTO) {
+    @PostMapping("/pay-rent")
+    public ResponseEntity<?> getFinalPaymentWithdrawalURL(@RequestBody UmbrellaIDDTO dto) {
+        try {
+            String approvalURL = rentalService.getApprovalURLForFinalPayment(
+                    dto.getUmbrellaID(),
+                    AuthenticationUtils.getCurrentUserEmail()
+            );
+            return ResponseEntity.ok(new PayPalPaymentURLDTO(approvalURL));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating final payment approval url");
+        }
+    }
+
+    @PostMapping("/retrieve-locker-data")
+    public ResponseEntity<?> captureDepositPaymentAndGetLockerData(@RequestBody CaptureDepositPaymentDTO captureDepositPaymentDTO) {
         try {
             StorageBox storageBox = rentalService.rentUmbrellaAndGetLockerInfo(
-                    capturePaymentDTO.getOrderID(),
-                    capturePaymentDTO.getRentalType(),
-                    capturePaymentDTO.getUmbrellaID(),
+                    captureDepositPaymentDTO.getOrderID(),
+                    captureDepositPaymentDTO.getRentalType(),
+                    captureDepositPaymentDTO.getUmbrellaID(),
                     AuthenticationUtils.getCurrentUserEmail()
             );
             return ResponseEntity.ok(new StorageBoxDTO(storageBox.getNumber(), storageBox.getCode()));
@@ -102,13 +117,19 @@ public class RentalController {
         }
     }
 
-    @PostMapping("/refund")
-    public ResponseEntity<String> refundPayment(@RequestBody Long rentalId) {
+    @PostMapping("/refund-deposit")
+    public ResponseEntity<?> captureFinalPaymentAndRefundDeposit(@RequestBody CaptureFinalPaymentDTO captureFinalPaymentDTO) {
         try {
-            rentalService.returnUmbrellaAndRefundDeposit(rentalId);
-            return ResponseEntity.ok("Deposit refunded");
+            rentalService.returnUmbrellaAndRefundDeposit(
+                    captureFinalPaymentDTO.getOrderID(),
+                    captureFinalPaymentDTO.getUmbrellaID(),
+                    AuthenticationUtils.getCurrentUserEmail()
+            );
+            return ResponseEntity.ok("Payment succeeded. Refund is on its way");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing refund: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error capturing payment: " + e.getMessage());
         }
     }
 }

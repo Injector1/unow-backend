@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class CapturePaymentDTO {
+public class CaptureDepositPaymentDTO {
     private String orderID;
     private String rentalType;
     private long umbrellaID;
