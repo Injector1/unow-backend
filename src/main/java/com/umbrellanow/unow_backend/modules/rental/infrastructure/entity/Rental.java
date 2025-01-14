@@ -45,6 +45,6 @@ public class Rental extends AbstractEntity {
     @ManyToOne
     @JoinColumn(name = "discount_id")
     private Discount discount;
-    @OneToMany(mappedBy = "associatedRental", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "associatedRental", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions;
 }
