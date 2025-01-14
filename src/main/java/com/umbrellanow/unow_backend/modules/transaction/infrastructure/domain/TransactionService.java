@@ -7,6 +7,7 @@ import com.umbrellanow.unow_backend.modules.users.infrastructure.entity.User;
 
 public interface TransactionService {
     void createDepositTransaction(User user, Umbrella umbrella, double deposit, String orderID);
+    void createPaymentTransaction(Rental rental, String orderID);
     void createRefundTransaction(Rental rental, double refundAmount);
     Transaction findByOrderID(String orderID);
     Transaction updateTransaction(String orderID, String captureID, Rental rental);

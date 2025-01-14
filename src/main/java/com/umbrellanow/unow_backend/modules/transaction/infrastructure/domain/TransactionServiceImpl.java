@@ -44,6 +44,18 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    public void createPaymentTransaction(Rental rental,
+                                         String orderID) {
+        Transaction transaction = new Transaction();
+        transaction.setUser(rental.getUser());
+        transaction.setAssociatedUmbrella(rental.getUmbrella());
+        transaction.setAmount(rental.getTotalCost());
+        transaction.setType(TransactionType.RENTAL);
+        transaction.setOrderID(orderID);
+        transactionRepository.save(transaction);
+    }
+
+    @Override
     public Transaction findByOrderID(String orderID) {
         return transactionRepository.findByOrderID(orderID).orElse(null);
     }
