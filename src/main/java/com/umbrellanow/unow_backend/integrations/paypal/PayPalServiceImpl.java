@@ -1,17 +1,22 @@
 package com.umbrellanow.unow_backend.integrations.paypal;
 
 import com.paypal.core.PayPalHttpClient;
+import com.paypal.http.HttpResponse;
 import com.paypal.http.exceptions.HttpException;
 import com.paypal.orders.AmountWithBreakdown;
 import com.paypal.orders.ApplicationContext;
+import com.paypal.orders.Capture;
 import com.paypal.orders.Order;
 import com.paypal.orders.OrderRequest;
 import com.paypal.orders.OrdersCaptureRequest;
 import com.paypal.orders.OrdersCreateRequest;
+import com.paypal.orders.PurchaseUnit;
 import com.paypal.orders.PurchaseUnitRequest;
 import com.paypal.payments.CapturesRefundRequest;
 import com.paypal.payments.Money;
+import com.paypal.payments.Refund;
 import com.paypal.payments.RefundRequest;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,8 +32,9 @@ public class PayPalServiceImpl implements PayPalService {
     private PayPalHttpClient payPalHttpClient;
 
 
+    @Transactional
     @Override
-    public Map<String, String> createDepositOrder(double depositAmount) throws IOException {
+    public Map<String, String> createPaymentOrder(double amount) throws IOException {
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.checkoutPaymentIntent("CAPTURE");
 
@@ -37,7 +43,7 @@ public class PayPalServiceImpl implements PayPalService {
                 .amountWithBreakdown(
                         new AmountWithBreakdown()
                                 .currencyCode("EUR")
-                                .value(String.valueOf(depositAmount))
+                                .value(String.valueOf(amount))
                 );
         purchaseUnits.add(purchaseUnit);
         orderRequest.purchaseUnits(purchaseUnits);
@@ -65,24 +71,33 @@ public class PayPalServiceImpl implements PayPalService {
         return result;
     }
 
+    @Transactional
     @Override
-    public boolean capturePayment(String orderId) throws IOException {
+    public String capturePayment(String orderId) throws IOException {
         try {
             OrdersCaptureRequest request = new OrdersCaptureRequest(orderId);
-            request.requestBody(new OrderRequest());
-            Order order = payPalHttpClient.execute(request).result();
+            HttpResponse<Order> response = payPalHttpClient.execute(request);
+            Order order = response.result();
 
-            return "COMPLETED".equalsIgnoreCase(order.status());
+            if ("COMPLETED".equalsIgnoreCase(order.status())) {
+                for (PurchaseUnit purchaseUnit : order.purchaseUnits()) {
+                    for (Capture capture : purchaseUnit.payments().captures()) {
+                        return capture.id();
+                    }
+                }
+            }
+            throw new RuntimeException("Payment capture failed: order not completed.");
         } catch (HttpException ex) {
             if (ex.getMessage().contains("ORDER_ALREADY_CAPTURED")) {
-                System.out.println("Order already captured: " + orderId);  // TODO: replace with more robust logging
-                return true;
+                System.out.println("Order already captured: " + orderId);
+                throw new RuntimeException("Order already captured. Unable to process duplicate captures.");
             } else {
                 throw ex;
             }
         }
     }
 
+    @Transactional
     @Override
     public boolean refundPayment(String captureId, double refundAmount) throws IOException {
         RefundRequest refundRequest = new RefundRequest()
@@ -92,6 +107,14 @@ public class PayPalServiceImpl implements PayPalService {
         CapturesRefundRequest request = new CapturesRefundRequest(captureId);
         request.requestBody(refundRequest);
 
-        return payPalHttpClient.execute(request).statusCode() == 201;
+        HttpResponse<Refund> response = payPalHttpClient.execute(request);
+
+        if (response.statusCode() == 201) {
+            System.out.println("Refund successful: " + captureId);
+            return true;
+        } else {
+            System.out.println("Refund failed: " + response.statusCode());
+            return false;
+        }
     }
 }
