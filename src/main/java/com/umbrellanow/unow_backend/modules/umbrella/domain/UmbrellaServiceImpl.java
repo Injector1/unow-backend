@@ -103,4 +103,16 @@ public class UmbrellaServiceImpl implements UmbrellaService {
         umbrellaByID.setLastLeaseDate(LocalDateTime.now());
         umbrellaRepository.save(umbrellaByID);
     }
+
+    @Override
+    public void markUmbrellaAsAvailable(long umbrellaID) {
+        Umbrella umbrellaByID = getUmbrellaByID(umbrellaID);
+
+        if (!umbrellaByID.isCurrentlyLeased()) {
+            throw new IllegalArgumentException("Umbrella is not leased");
+        }
+
+        umbrellaByID.setCurrentlyLeased(false);
+        umbrellaRepository.save(umbrellaByID);
+    }
 }

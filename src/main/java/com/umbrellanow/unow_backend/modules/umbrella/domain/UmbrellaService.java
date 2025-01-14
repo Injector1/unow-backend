@@ -12,4 +12,5 @@ public interface UmbrellaService {
     Umbrella getUmbrellaByID(long umbrellaID);
     PriceRate getPriceRateForUmbrella(long umbrellaID);
     void markUmbrellaAsLeased(long umbrellaID);
+    void markUmbrellaAsAvailable(long umbrellaID);
 }

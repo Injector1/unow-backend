@@ -149,6 +149,7 @@ public class RentalServiceImpl implements RentalService {
 
             if (refundSucceeded) {
                 transactionService.createRefundTransaction(rental, depositByRental.getAmount());
+                umbrellaService.markUmbrellaAsAvailable(umbrellaID);
                 rental.setStatus(RentalStatus.COMPLETED);
                 rentalRepository.save(rental);
             } else {
