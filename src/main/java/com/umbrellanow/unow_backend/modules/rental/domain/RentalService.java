@@ -14,17 +14,17 @@ import java.util.List;
 
 public interface RentalService {
     Rental getRentalByID(long rentalID);
-
-    @Transactional
-    void returnUmbrellaAndRefundDeposit(long rentalId) throws IOException;
-
     Rental addRentalRecord(RentalType rentalType, User user, Umbrella umbrella, Discount discount);
     List<Rental> getAllRentalsByUserID(long userID);
     List<Rental> getAllRentalsByUmbrellaID(long umbrellaID);
     String getApprovalURLForUmbrellaDeposit(long umbrellaID) throws IOException;
+    String getApprovalURLForFinalPayment(long umbrellaID, String userEmail) throws IOException;
     StorageBox rentUmbrellaAndGetLockerInfo(String orderID,
                                             String rentalType,
                                             long umbrellaID,
                                             String userEmail) throws IOException;
+    void returnUmbrellaAndRefundDeposit(String orderID, long umbrellaID, String userEmail) throws IOException;
     Collection<Rental> getAllRentalsForUser(String userEmail);
+    double calculateRentalCost(Long umbrellaID, String userEmail);
+    double getRateForRental(Rental rental);
 }

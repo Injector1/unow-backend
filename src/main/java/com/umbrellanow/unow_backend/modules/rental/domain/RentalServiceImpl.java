@@ -68,10 +68,39 @@ public class RentalServiceImpl implements RentalService {
         }
 
         Double deposit = umbrella.getUmbrellaGroup().getPriceRate().getDeposit();
-        Map<String, String> payPalData = payPalService.createDepositOrder(deposit);
+        Map<String, String> payPalData = payPalService.createPaymentOrder(deposit);
 
         transactionService.createDepositTransaction(userByEmail, umbrella, deposit, payPalData.get("orderId"));
         return payPalData.get("approvalLink");
+    }
+
+    @Transactional
+    @Override
+    public String getApprovalURLForFinalPayment(long umbrellaID, String userEmail) throws IOException {
+        Umbrella umbrella = umbrellaService.getUmbrellaByID(umbrellaID);
+        User userByEmail = userService.getUserByEmail(userEmail);
+
+        if (umbrella == null || !umbrella.isCurrentlyLeased()) {
+            throw new IllegalArgumentException("Umbrella not available.");
+        }
+
+        if (userByEmail == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        Rental rental = getRentalByUmbrellaIDAndUserID(umbrella.getId(), userByEmail.getId());
+        double totalCost = calculateTotalCost(rental);
+
+        if (totalCost == 0) {
+            // TODO: handle properly when cost == 0. Now we are charging minimum amount
+            totalCost = getRateForRental(rental);
+        }
+        rental.setTotalCost(totalCost);
+
+        Rental savedRental = rentalRepository.save(rental);
+        Map<String, String> paymentOrder = payPalService.createPaymentOrder(totalCost);
+        transactionService.createPaymentTransaction(savedRental, paymentOrder.get("orderId"));
+        return paymentOrder.get("approvalLink");
     }
 
     @Transactional
@@ -80,22 +109,51 @@ public class RentalServiceImpl implements RentalService {
                                                    String rentalType,
                                                    long umbrellaID,
                                                    String userEmail) throws IOException {
-        boolean success = payPalService.capturePayment(orderID);
+        String captureId = payPalService.capturePayment(orderID);
 
-        if (success) {
+        if (captureId != null) {
             Rental rental = addRentalRecord(
-                    RentalType.valueOf(rentalType),
+                    RentalType.parseType(rentalType),
                     userService.getUserByEmail(userEmail),
                     umbrellaService.getUmbrellaByID(umbrellaID),
                     null
             );
             Transaction transaction = transactionService.updateTransaction(
                     orderID,
-                    orderID,
+                    captureId,
                     rental
             );
             umbrellaService.markUmbrellaAsLeased(umbrellaID);
             return transaction.getAssociatedUmbrella().getStorageBox();
+        } else {
+            throw new RuntimeException("Payment capture failed.");
+        }
+    }
+
+    @Transactional
+    @Override
+    public void returnUmbrellaAndRefundDeposit(String orderID, long umbrellaID, String userEmail) throws IOException {
+        String captureId = payPalService.capturePayment(orderID);
+
+        User userByEmail = userService.getUserByEmail(userEmail);
+
+        if (userByEmail == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        if (captureId != null) {
+            Rental rental = getRentalByUmbrellaIDAndUserID(umbrellaID, userByEmail.getId());
+            Transaction depositByRental = transactionService.findDepositByRental(rental);
+            boolean refundSucceeded =
+                    payPalService.refundPayment(depositByRental.getCaptureID(), depositByRental.getAmount());
+
+            if (refundSucceeded) {
+                transactionService.createRefundTransaction(rental, depositByRental.getAmount());
+                rental.setStatus(RentalStatus.COMPLETED);
+                rentalRepository.save(rental);
+            } else {
+                throw new RuntimeException("Refund failed. Contact support");
+            }
         } else {
             throw new RuntimeException("Payment capture failed.");
         }
@@ -111,31 +169,27 @@ public class RentalServiceImpl implements RentalService {
         return rentalRepository.findAllByUser_id(userByEmail.getId());
     }
 
-    @Transactional
     @Override
-    public void returnUmbrellaAndRefundDeposit(long rentalId) throws IOException {
-        Rental rental = getRentalByID(rentalId);
-
-        if (rental == null) {
-            throw new IllegalArgumentException("Invalid rental.");
+    public double calculateRentalCost(Long umbrellaID, String userEmail) {
+        if (umbrellaID == null) {
+            throw new IllegalArgumentException("Umbrella not found");
         }
 
-        Transaction depositTransaction = transactionService.findDepositByRental(rental);
+        User userByEmail = userService.getUserByEmail(userEmail);
+        if (userByEmail == null) {
+            throw new IllegalArgumentException("User not found");
+        }
 
-        rental.setReturnedAt(LocalDateTime.now());
-        double totalCost = calculateRentalCost(rental);
-        double refundAmount = depositTransaction.getAmount() - totalCost;
+        Rental rental = getRentalByUmbrellaIDAndUserID(umbrellaID, userByEmail.getId());
+        return calculateTotalCost(rental);
+    }
 
-        // TODO: logic amount < 0
-
-        boolean refundSuccess = payPalService.refundPayment(depositTransaction.getCaptureID(), refundAmount);
-        if (refundSuccess) {
-            transactionService.createRefundTransaction(rental, refundAmount);
-            // TODO: update rental price field
-            rental.setStatus(RentalStatus.COMPLETED);
-            rentalRepository.save(rental);
+    @Override
+    public double getRateForRental(Rental rental) {
+        if (rental.getType() == RentalType.DAILY) {
+            return rental.getUmbrella().getUmbrellaGroup().getPriceRate().getDailyRate();
         } else {
-            throw new RuntimeException("Refund failed.");
+            return rental.getUmbrella().getUmbrellaGroup().getPriceRate().getHourlyRate();
         }
     }
 
@@ -160,12 +214,30 @@ public class RentalServiceImpl implements RentalService {
         return rentalRepository.findAllByUmbrella_id(umbrellaID);
     }
 
-    private double calculateRentalCost(Rental rental) {
+
+    private Rental getRentalByUmbrellaIDAndUserID(Long umbrellaID, Long userID) {
+        List<Rental> rentals = rentalRepository.findAllByUmbrella_idAndUser_idAndStatus(
+                umbrellaID,
+                userID,
+                RentalStatus.ACTIVE
+        );
+        if (rentals.isEmpty()) {
+            throw new IllegalArgumentException("No active rentals found");
+        }
+
+        if (rentals.size() > 1) {
+            throw new RuntimeException("Too many rentals for user");
+        }
+
+        return rentals.getFirst();
+    }
+
+    private double calculateTotalCost(Rental rental) {
         return switch (rental.getType()) {
             case DAILY -> rental.getUmbrella().getUmbrellaGroup().getPriceRate().getDailyRate()
-                        * Duration.between(rental.getCreatedDate(), rental.getReturnedAt()).toDays();
+                        * Duration.between(rental.getCreatedDate(), LocalDateTime.now()).toDays();
             case HOURLY -> rental.getUmbrella().getUmbrellaGroup().getPriceRate().getHourlyRate()
-                        * Duration.between(rental.getCreatedDate(), rental.getReturnedAt()).toHours();
+                        * Duration.between(rental.getCreatedDate(), LocalDateTime.now()).toHours();
             case null -> throw new RuntimeException("No rate specified");
         };
     }
