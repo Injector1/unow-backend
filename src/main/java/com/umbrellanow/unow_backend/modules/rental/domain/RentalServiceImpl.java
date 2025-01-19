@@ -4,6 +4,7 @@ import com.umbrellanow.unow_backend.integrations.paypal.PayPalService;
 import com.umbrellanow.unow_backend.modules.discount.infrastructure.entity.Discount;
 import com.umbrellanow.unow_backend.modules.rental.infrastructure.RentalRepository;
 import com.umbrellanow.unow_backend.modules.rental.infrastructure.entity.Rental;
+import com.umbrellanow.unow_backend.modules.storage.domain.StorageService;
 import com.umbrellanow.unow_backend.modules.storage.infrastructure.entity.StorageBox;
 import com.umbrellanow.unow_backend.modules.transaction.infrastructure.domain.TransactionService;
 import com.umbrellanow.unow_backend.modules.transaction.infrastructure.entity.Transaction;
@@ -32,6 +33,7 @@ public class RentalServiceImpl implements RentalService {
     private final UserService userService;
     private final PayPalService payPalService;
     private final TransactionService transactionService;
+    private final StorageService storageService;
 
 
     @Autowired
@@ -39,12 +41,14 @@ public class RentalServiceImpl implements RentalService {
                              UmbrellaService umbrellaService,
                              UserService userService,
                              PayPalService payPalService,
-                             TransactionService transactionService) {
+                             TransactionService transactionService,
+                             StorageService storageService) {
         this.rentalRepository = rentalRepository;
         this.umbrellaService = umbrellaService;
         this.userService = userService;
         this.payPalService = payPalService;
         this.transactionService = transactionService;
+        this.storageService = storageService;
     }
 
 
@@ -112,10 +116,11 @@ public class RentalServiceImpl implements RentalService {
         String captureId = payPalService.capturePayment(orderID);
 
         if (captureId != null) {
+            Umbrella umbrellaByID = umbrellaService.getUmbrellaByID(umbrellaID);
             Rental rental = addRentalRecord(
                     RentalType.parseType(rentalType),
                     userService.getUserByEmail(userEmail),
-                    umbrellaService.getUmbrellaByID(umbrellaID),
+                    umbrellaByID,
                     null
             );
             Transaction transaction = transactionService.updateTransaction(
@@ -124,7 +129,7 @@ public class RentalServiceImpl implements RentalService {
                     rental
             );
             umbrellaService.markUmbrellaAsLeased(umbrellaID);
-            return transaction.getAssociatedUmbrella().getStorageBox();
+            return storageService.markStorageAsEmpty(umbrellaByID.getStorageBox());
         } else {
             throw new RuntimeException("Payment capture failed.");
         }
@@ -132,7 +137,7 @@ public class RentalServiceImpl implements RentalService {
 
     @Transactional
     @Override
-    public void returnUmbrellaAndRefundDeposit(String orderID, long umbrellaID, String userEmail) throws IOException {
+    public StorageBox returnUmbrellaAndGetLockerInfo(String orderID, long umbrellaID, String userEmail) throws IOException {
         // TODO: update also RENTAL transaction with capture id
         String captureId = payPalService.capturePayment(orderID);
 
@@ -153,6 +158,10 @@ public class RentalServiceImpl implements RentalService {
                 umbrellaService.markUmbrellaAsAvailable(umbrellaID);
                 rental.setStatus(RentalStatus.COMPLETED);
                 rentalRepository.save(rental);
+
+                StorageBox emptyStorageBox = storageService.findEmptyStorageBox();
+
+                return storageService.setAssociatedUmbrellaForBox(emptyStorageBox, rental.getUmbrella());
             } else {
                 throw new RuntimeException("Refund failed. Contact support");
             }
@@ -183,7 +192,8 @@ public class RentalServiceImpl implements RentalService {
         }
 
         Rental rental = getRentalByUmbrellaIDAndUserID(umbrellaID, userByEmail.getId());
-        return calculateTotalCost(rental);
+        double totalCost = calculateTotalCost(rental);
+        return totalCost == 0 ? getRateForRental(rental) : totalCost;
     }
 
     @Override

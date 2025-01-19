@@ -120,12 +120,12 @@ public class RentalController {
     @PostMapping("/refund-deposit")
     public ResponseEntity<?> captureFinalPaymentAndRefundDeposit(@RequestBody CaptureFinalPaymentDTO captureFinalPaymentDTO) {
         try {
-            rentalService.returnUmbrellaAndRefundDeposit(
+            StorageBox storageBox = rentalService.returnUmbrellaAndGetLockerInfo(
                     captureFinalPaymentDTO.getOrderID(),
                     captureFinalPaymentDTO.getUmbrellaID(),
                     AuthenticationUtils.getCurrentUserEmail()
             );
-            return ResponseEntity.ok("Payment succeeded. Refund is on its way");
+            return ResponseEntity.ok(new StorageBoxDTO(storageBox.getNumber(), storageBox.getCode()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {

@@ -6,7 +6,6 @@ import com.umbrellanow.unow_backend.modules.storage.infrastructure.entity.Storag
 import com.umbrellanow.unow_backend.modules.umbrella.infrastructure.entity.Umbrella;
 import com.umbrellanow.unow_backend.modules.users.infrastructure.entity.User;
 import com.umbrellanow.unow_backend.shared.enumeration.RentalType;
-import jakarta.transaction.Transactional;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -23,7 +22,7 @@ public interface RentalService {
                                             String rentalType,
                                             long umbrellaID,
                                             String userEmail) throws IOException;
-    void returnUmbrellaAndRefundDeposit(String orderID, long umbrellaID, String userEmail) throws IOException;
+    StorageBox returnUmbrellaAndGetLockerInfo(String orderID, long umbrellaID, String userEmail) throws IOException;
     Collection<Rental> getAllRentalsForUser(String userEmail);
     double calculateRentalCost(Long umbrellaID, String userEmail);
     double getRateForRental(Rental rental);
